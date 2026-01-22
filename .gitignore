@@ -25,6 +25,8 @@ token.json
 # Project data (store locally, ignored)
 src/chat_project/data/json/
 src/chat_project/data/db/
+#Bruno
+Realm-Chat
 # Misc
 **/internal_info.txt
 **/internal_info.docx
