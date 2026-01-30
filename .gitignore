@@ -32,8 +32,15 @@ Realm-Chat
 **/internal_info.docx
 **/~$ternal_info.docx
 **/night_owl_stats.py
+<<<<<<< HEAD
+# REMAKE
+*REMAKE
+#internal tests
+*static_tests_internal
+=======
 
 # dev only
 
 **/dev_exclusive
+>>>>>>> a0267b5ef5d271739650b56ef00008cf32e0a697
 
