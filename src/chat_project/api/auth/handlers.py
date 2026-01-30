@@ -4,7 +4,7 @@ import sys
 from dotenv import load_dotenv
 import threading
 import re
-from flask import Flask, request, jsonify # Flask items are needed for request/jsonify
+from flask import Flask, request, jsonify, current_app # Flask items are needed for request/jsonify
 from flask_sqlalchemy import SQLAlchemy 
 import hashlib
 from datetime import datetime, timedelta
@@ -16,19 +16,20 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 
 
+
 # Package imports (models and helpers)
 # Import robustly so this module works when run as a package or as a script
 try:
     from chat_project.models.models import db, User_auth, backend_auth
 except ModuleNotFoundError:
     # Running without package context: add project 'src' to sys.path and retry
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
-    from chat_project.models.models import db, User_auth, backend_auth
+    from src.chat_project.models.models import db, User_auth, backend_auth
 
 auth_backend = backend_auth()
-
+print(f"DEBUG: db instance ID handlers is {id(db)}")
 
 # --- GLOBAL SETUP ---
 
@@ -106,11 +107,9 @@ def signup():
 
     username = info_user.get('username')
     password = info_user.get('password')
-    birthday = info_user.get('birthday')
-    display_name = info_user.get('display_name')
     email = info_user.get('email')
 
-    if not all([username, password, birthday, display_name, email]):
+    if not all([username, password, email]):
         return jsonify({"message": "All fields are required."}), 400
 
     # Validation
@@ -118,48 +117,35 @@ def signup():
         return jsonify({"message": "Password must be between 8 and 64 characters."}), 400
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         return jsonify({"message": "Invalid email format."}), 400
-    try:
-        datetime.fromisoformat(birthday)
-    except ValueError:
-        return jsonify({"message": "Invalid birthday format."}), 400
     
     # Check for duplicate using SQLAlchemy
     # These calls now work because of the 'with current_app.app_context()' we added to backend_auth
 
 
-    if auth_backend.get_username(username=username):
-        return jsonify({"message": "Username already taken."}), 409
-    if auth_backend.get_email(email=email):
-        return jsonify({"message": "Email already registered."}), 409
+    with current_app.app_context():
+        if auth_backend.get_username(username=username):
+            return jsonify({"message": "Username already taken."}), 409
+    with current_app.app_context():
+        if auth_backend.get_email(email=email):
+            return jsonify({"message": "Email already registered."}), 409
 
     hashed_password = hash_password(password)
-    otp_code = gen_otp()
-    otp_expiration = datetime.now() + timedelta(minutes=10)
 
     # UPDATED: Use User_auth instead of User
     new_user = User_auth(
         password=hashed_password,
-        birthday=birthday,
         username=username,
-        display_name=display_name,
         email=email,
-        otp_code=otp_code,
-        otp_expires_at=otp_expiration
     )
 
     db.session.add(new_user)
     db.session.commit() 
 
-    # FIXED: Added () to .start()
-    email_thread = threading.Thread(
-        target=send_email,
-        args=(email, otp_code, username)
-    )
-    email_thread.start() # Added parentheses here
+
     
     print(f"New user registered: {username}")
 
-    return jsonify({"message": "Signup successful! OTP sent."}), 200
+    return jsonify({"message": "Signup successful!"}), 200
 
 
 

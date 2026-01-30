@@ -2,16 +2,18 @@ import os
 import sys
 from flask import Flask
 from flask_cors import CORS
-from config import Config  # Your source of truth
+
 
 # Package imports with path fix
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from chat_project.models.models import db
+from config import Config
+
+from src.chat_project.models.models import db
 # Import views/handlers
-from chat_project.api.auth.handlers import signup, login, verify_otp
+from src.chat_project.api.auth.handlers import signup, login, verify_otp
 
 def server():
     app = Flask(__name__)
@@ -20,10 +22,10 @@ def server():
     # 1. Load everything (DB paths, Secrets, etc.) from the Config class
     app.config.from_object(Config)
 
-    print(f"DEBUG: Using DB URI: {app.config.get('SQLALCHEMY_DATABASE_URI')}")
-    print(f"DEBUG: Current Working Directory: {os.getcwd()}")
     # 2. Initialize DB
     db.init_app(app)
+
+    print(f"DEBUG: db instance server ID is {id(db)}")
 
     # 3. Create tables using the paths defined in Config
     with app.app_context():

@@ -17,13 +17,10 @@ class Config:
     DB_AUTH = (BASE_DIR / (os.getenv("DB_AUTH_PATH") or "")).resolve()
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{DB_AUTH.as_posix()}"
     
-    DB_MSG = (BASE_DIR / (os.getenv("DB_MESSAGE_PATH") or "")).resolve()
     SQLALCHEMY_BINDS = {
-        "auth": f"sqlite:///{DB_AUTH.as_posix()}",
-        "msg": f"sqlite:///{DB_MSG.as_posix()}"
+        "auth": f"sqlite:///{DB_AUTH.as_posix()}"
     }
 
 @staticmethod
 def init_app():
     Config.AUTH_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    Config.MSG_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
